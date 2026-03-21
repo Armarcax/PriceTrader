@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PriceTrader - Գների Համեմատության Հարթակ</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        accent: '#f59e0b',
+                        dark: '#0f172a',
+                        light: '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%); }
+        .gradient-text { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2); }
+        .marketplace-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .amazon { background: #FF9900; color: white; }
+        .ebay { background: #E53238; color: white; }
+        .aliexpress { background: #FF4747; color: white; }
+        .ozon { background: #005BFF; color: white; }
+        .wildberries { background: #CB11AB; color: white; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .animate-pulse-slow { animation: pulse 2s infinite; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slideIn 0.5s ease forwards; }
+        .token-glow { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, createContext, useContext } = React;
+
+        // ==================== I18N SYSTEM ====================
+        const translations = {
+            hy: {
+                search: "Որոնել ապրանքներ",
+                searchPlaceholder: "Մուտքագրեք ապրանքի անունը...",
+                products: "Ապրանքներ",
+                compare: "Համեմատել",
+                bestDeal: "Լավագույն առաջարկ",
+                price: "Գին",
+                shipping: "Առաքում",
+                delivery: "Առաքման ժամկետ",
+                availability: "Առկայություն",
+                rating: "Վարկանիշ",
+                filters: "Ֆիլտրեր",
+                reset: "Վերականգնել",
+                loading: "Բեռնում է...",
+                noProducts: "Ապրանքներ չեն գտնվել",
+                viewDetails: "Մանրամասներ",
+                buyNow: "Գնել հիմա",
+                savings: "Խնայողություն",
+                tokenReward: "HAYQ Տոկեններ",
+                darkMode: "Մութ ռեժիմ",
+                lightMode: "Բաց ռեժիմ",
+                language: "Լեզու",
+                home: "Գլխավոր",
+                deals: "Առաջարկներ",
+                profile: "Պրոֆիլ",
+                telegram: "Telegram Bot",
+                totalSavings: "Ընդհանուր խնայողություն",
+                productsTracked: "Հետևվող ապրանքներ",
+                marketplaces: "Շուկաներ",
+                welcome: "Բարի գալուստ PriceTrader",
+                subtitle: "Գտեք լավագույն գները բոլոր շուկաներում",
+                featuredDeals: "Առաջատար առաջարկներ",
+                priceHistory: "Գների պատմություն",
+                specifications: "Բնութագրեր",
+                reviews: "Գրախոսություններ",
+                affiliate: "Գործընկերային ծրագիր",
+                cashback: "Քեշբեք",
+                earn: "Վաստակել",
+                redeem: "Օգտագործել"
+            },
+            en: {
+                search: "Search Products",
+                searchPlaceholder: "Enter product name...",
+                products: "Products",
+                compare: "Compare",
+                bestDeal: "Best Deal",
+                price: "Price",
+                shipping: "Shipping",
+                delivery: "Delivery Time",
+                availability: "Availability",
+                rating: "Rating",
+                filters: "Filters",
+                reset: "Reset",
+                loading: "Loading...",
+                noProducts: "No products found",
+                viewDetails: "View Details",
+                buyNow: "Buy Now",
+                savings: "Savings",
+                tokenReward: "HAYQ Tokens",
+                darkMode: "Dark Mode",
+                lightMode: "Light Mode",
+                language: "Language",
+                home: "Home",
+                deals: "Deals",
+                profile: "Profile",
+                telegram: "Telegram Bot",
+                totalSavings: "Total Savings",
+                productsTracked: "Products Tracked",
+                marketplaces: "Marketplaces",
+                welcome: "Welcome to PriceTrader",
+                subtitle: "Find the best prices across all marketplaces",
+                featuredDeals: "Featured Deals",
+                priceHistory: "Price History",
+                specifications: "Specifications",
+                reviews: "Reviews",
+                affiliate: "Affiliate Program",
+                cashback: "Cashback",
+                earn: "Earn",
+                redeem: "Redeem"
+            },
+            ru: {
+                search: "Поиск товаров",
+                searchPlaceholder: "Введите название товара...",
+                products: "Товары",
+                compare: "Сравнить",
+                bestDeal: "Лучшее предложение",
+                price: "Цена",
+                shipping: "Доставка",
+                delivery: "Срок доставки",
+                availability: "Наличие",
+                rating: "Рейтинг",
+                filters: "Фильтры",
+                reset: "Сбросить",
+                loading: "Загрузка...",
+                noProducts: "Товары не найдены",
+                viewDetails: "Подробнее",
+                buyNow: "Купить сейчас",
+                savings: "Экономия",
+                tokenReward: "HAYQ Токены",
+                darkMode: "Тёмный режим",
+                lightMode: "Светлый режим",
+                language: "Язык",
+                home: "Главная",
+                deals: "Предложения",
+                profile: "Профиль",
+                telegram: "Telegram Бот",
+                totalSavings: "Общая экономия",
+                productsTracked: "Отслеживаемые товары",
+                marketplaces: "Маркетплейсы",
+                welcome: "Добро пожаловать в PriceTrader",
+                subtitle: "Найдите лучшие цены на всех маркетплейсах",
+                featuredDeals: "Лучшие предложения",
+                priceHistory: "История цен",
+                specifications: "Характеристики",
+                reviews: "Отзывы",
+                affiliate: "Партнёрская программа",
+                cashback: "Кэшбэк",
+                earn: "Заработать",
+                redeem: "Использовать"
+            }
+        };
+
+        const I18nContext = createContext();
+        const useI18n = () => useContext(I18nContext);
+
+        // ==================== MOCK DATA ====================
+        const MARKETPLACES = {
+            amazon: { name: 'Amazon', icon: '📦', class: 'amazon', affiliateRate: 0.04 },
+            ebay: { name: 'eBay', icon: '🛍️', class: 'ebay', affiliateRate: 0.03 },
+            aliexpress: { name: 'AliExpress', icon: '🌏', class: 'aliexpress', affiliateRate: 0.06 },
+            ozon: { name: 'Ozon', icon: '🏪', class: 'ozon', affiliateRate: 0.05 },
+            wildberries: { name: 'Wildberries', icon: '🛒', class: 'wildberries', affiliateRate: 0.04 }
+        };
+
+        const MOCK_PRODUCTS = [
+            {
+                id: 1,
+                name: { en: "Apple iPhone 15 Pro 256GB", hy: "Apple iPhone 15 Pro 256GB", ru: "Apple iPhone 15 Pro 256GB" },
+                image: "📱",
+                category: "Electronics",
+                specs: { storage: "256GB", ram: "8GB", display: "6.1\"", camera: "48MP" },
+                prices: [
+                    { marketplace: 'amazon', price: 999.99, shipping: 0, delivery: '2-3 days', inStock: true, rating: 4.8, url: '#', affiliateId: 'amz_123' },
+                    { marketplace: 'ebay', price: 949.99, shipping: 25, delivery: '5-7 days', inStock: true, rating: 4.6, url: '#', affiliateId: 'ebay_456' },
+                    { marketplace: 'aliexpress', price: 899.99, shipping: 15, delivery: '10-15 days', inStock: true, rating: 4.5, url: '#', affiliateId: 'ali_789' },
+                    { marketplace: 'ozon', price: 979.99, shipping: 0, delivery: '3-5 days', inStock: true, rating: 4.7, url: '#', affiliateId: 'ozon_012' }
+                ],
+                priceHistory: [1099, 1079, 1049, 1029, 999, 979, 999, 989, 999],
+                matchScore: 0.95,
+                tokenReward: 50
+            },
+            {
+                id: 2,
+                name: { en: "Sony WH-1000XM5 Headphones", hy: "Sony WH-1000XM5 Ականջակալներ", ru: "Наушники Sony WH-1000XM5" },
+                image: "🎧",
+                category: "Electronics",
+                specs: { type: "Over-ear", noiseCancel: "Yes", battery: "30h", bluetooth: "5.2" },
+                prices: [
+                    { marketplace: 'amazon', price: 349.99, shipping: 0, delivery: '1-2 days', inStock: true, rating: 4.9, url: '#', affiliateId: 'amz_234' },
+                    { marketplace: 'ozon', price: 329.99, shipping: 10, delivery: '3-5 days', inStock: true, rating: 4.7, url: '#', affiliateId: 'ozon_345' },
+                    { marketplace: 'wildberries', price: 319.99, shipping: 0, delivery: '2-4 days', inStock: false, rating: 4.6, url: '#', affiliateId: 'wb_567' }
+                ],
+                priceHistory: [399, 389, 379, 359, 349, 339, 349, 349, 349],
+                matchScore: 0.92,
+                tokenReward: 30
+            },
+            {
+                id: 3,
+                name: { en: "Nike Air Max 270", hy: "Nike Air Max 270", ru: "Nike Air Max 270" },
+                image: "👟",
+                category: "Fashion",
+                specs: { size: "US 9-12", color: "Black/White", material: "Mesh", type: "Running" },
+                prices: [
+                    { marketplace: 'amazon', price: 159.99, shipping: 0, delivery: '2-3 days', inStock: true, rating: 4.5, url: '#', affiliateId: 'amz_345' },
+                    { marketplace: 'ebay', price: 139.99, shipping: 20, delivery: '7-10 days', inStock: true, rating: 4.3, url: '#', affiliateId: 'ebay_678' },
+                    { marketplace: 'aliexpress', price: 89.99, shipping: 12, delivery: '15-20 days', inStock: true, rating: 4.0, url: '#', affiliateId: 'ali_901' }
+                ],
+                priceHistory: [179, 169, 169, 159, 149, 139, 159, 159, 159],
+                matchScore: 0.88,
+                tokenReward: 20
+            },
+            {
+                id: 4,
+                name: { en: "Samsung Galaxy Watch 6", hy: "Samsung Galaxy Watch 6", ru: "Samsung Galaxy Watch 6" },
+                image: "⌚",
+                category: "Electronics",
+                specs: { display: "1.5\"", battery: "40h", waterResist: "5ATM", gps: "Yes" },
+                prices: [
+                    { marketplace: 'amazon', price: 299.99, shipping: 0, delivery: '1-2 days', inStock: true, rating: 4.7, url: '#', affiliateId: 'amz_456' },
+                    { marketplace: 'ozon', price: 279.99, shipping: 15, delivery: '3-5 days', inStock: true, rating: 4.6, url: '#', affiliateId: 'ozon_567' },
+                    { marketplace: 'wildberries', price: 269.99, shipping: 0, delivery: '2-4 days', inStock: true, rating: 4.5, url: '#', affiliateId: 'wb_678' }
+                ],
+                priceHistory: [349, 329, 319, 309, 299, 289, 299, 299, 299],
+                matchScore: 0.94,
+                tokenReward: 35
+            },
+            {
+                id: 5,
+                name: { en: "MacBook Air M2 13\"", hy: "MacBook Air M2 13\"", ru: "MacBook Air M2 13\"" },
+                image: "💻",
+                category: "Electronics",
+                specs: { processor: "M2", ram: "8GB", storage: "256GB", display: "13.6\"" },
+                prices: [
+                    { marketplace: 'amazon', price: 1199.99, shipping: 0, delivery: '2-3 days', inStock: true, rating: 4.9, url: '#', affiliateId: 'amz_567' },
+                    { marketplace: 'ebay', price: 1099.99, shipping: 50, delivery: '5-7 days', inStock: true, rating: 4.7, url: '#', affiliateId: 'ebay_789' },
+                    { marketplace: 'aliexpress', price: 1049.99, shipping: 30, delivery: '10-15 days', inStock: false, rating: 4.4, url: '#', affiliateId: 'ali_012' }
+                ],
+                priceHistory: [1299, 1279, 1249, 1229, 1199, 1179, 1199, 1199, 1199],
+                matchScore: 0.96,
+                tokenReward: 75
+            },
+            {
+                id: 6,
+                name: { en: "Adidas Ultraboost 22", hy: "Adidas Ultraboost 22", ru: "Adidas Ultraboost 22" },
+                image: "👟",
+                category: "Fashion",
+                specs: { size: "US 8-13", color: "Multiple", material: "Primeknit", type: "Running" },
+                prices: [
+                    { marketplace: 'amazon', price: 189.99, shipping: 0, delivery: '2-3 days', inStock: true, rating: 4.6, url: '#', affiliateId: 'amz_678' },
+                    { marketplace: 'wildberries', price: 169.99, shipping: 0, delivery: '2-4 days', inStock: true, rating: 4.5, url: '#', affiliateId: 'wb_890' },
+                    { marketplace: 'ozon', price: 179.99, shipping: 10, delivery: '3-5 days', inStock: true, rating: 4.4, url: '#', affiliateId: 'ozon_901' }
+                ],
+                priceHistory: [219, 209, 199, 189, 179, 179, 189, 189, 189],
+                matchScore: 0.90,
+                tokenReward: 25
+            }
+        ];
+
+        // ==================== PRODUCT MATCHING ALGORITHM ====================
+        function calculateProductSimilarity(product1, product2) {
+            const title1 = product1.name.en.toLowerCase();
+            const title2 = product2.name.en.toLowerCase();
+            
+            // Tokenize and compare
+            const tokens1 = title1.split(/[\s\-_]/).filter(t => t.length > 2);
+            const tokens2 = title2.split(/[\s\-_]/).filter(t => t.length > 2);
+            
+            // Common tokens (brand, model, specs)
+            const commonTokens = tokens1.filter(t => tokens2.includes(t));
+            const tokenScore = commonTokens.length / Math.max(tokens1.length, tokens2.length);
+            
+            // Category match
+            const categoryScore = product1.category === product2.category ? 1 : 0;
+            
+            // Specs similarity
+            let specsScore = 0;
+            if (product1.specs && product2.specs) {
+                const specKeys1 = Object.keys(product1.specs);
+                const specKeys2 = Object.keys(product2.specs);
+                const commonSpecs = specKeys1.filter(k => specKeys2.includes(k));
+                specsScore = commonSpecs.length / Math.max(specKeys1.length, specKeys2.length);
+            }
+            
+            // Weighted final score
+            const finalScore = (tokenScore * 0.5) + (categoryScore * 0.3) + (specsScore * 0.2);
+            return finalScore;
+        }
+
+        function matchProducts(products, threshold = 0.7) {
+            const groups = [];
+            const used = new Set();
+            
+            for (let i = 0; i < products.length; i++) {
+                if (used.has(i)) continue;
+                
+                const group = [products[i]];
+                used.add(i);
+                
+                for (let j = i + 1; j < products.length; j++) {
+                    if (used.has(j)) continue;
+                    
+                    const similarity = calculateProductSimilarity(products[i], products[j]);
+                    if (similarity >= threshold) {
+                        group.push(products[j]);
+                        used.add(j);
+                        products[j].matchScore = similarity;
+                    }
+                }
+                
+                groups.push(group);
+            }
+            
+            return groups;
+        }
+
+        // ==================== COMPONENTS ====================
+
+        // Header Component
+        function Header({ darkMode, setDarkMode, lang, setLang, t, userTokens }) {
+            return (
+                <header className="gradient-bg text-white sticky top-0 z-50 shadow-lg">
+                    <div className="max-w-7xl mx-auto px-4 py-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <span className="text-4xl">🛒</span>
+                                <div>
+                                    <h1 className="text-2xl font-bold">PriceTrader</h1>
+                                    <p className="text-xs text-white text-opacity-75">{t.subtitle}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-4">
+                                {/* Token Display */}
+                                <div className="hidden md:flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-full token-glow">
+                                    <span className="text-xl">🪙</span>
+                                    <span className="font-bold">{userTokens} HAYQ</span>
+                                </div>
+                                
+                                {/* Language Selector */}
+                                <select
+                                    value={lang}
+                                    onChange={e => setLang(e.target.value)}
+                                    className="bg-white bg-opacity-20 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-white"
+                                >
+                                    <option value="hy">🇦🇲 HY</option>
+                                    <option value="en">🇺🇸 EN</option>
+                                    <option value="ru">🇷🇺 RU</option>
+                                </select>
+                                
+                                {/* Dark Mode Toggle */}
+                                <button
+                                    onClick={() => setDarkMode(!darkMode)}
+                                    className="bg-white bg-opacity-20 p-2 rounded-lg hover:bg-opacity-30 transition"
+                                >
+                                    {darkMode ? '☀️' : '🌙'}
+                                </button>
+                                
+                                {/* Telegram Bot Link */}
+                                <a
+                                    href="https://t.me/pricetrader_bot"
+                                    target="_blank"
+                                    className="hidden md:flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition"
+                                >
+                                    <span>✈️</span>
+                                    <span className="text-sm">{t.telegram}</span>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        {/* Navigation */}
+                        <nav className="flex gap-6 mt-4 pb-2 border-t border-white border-opacity-20">
+                            <a href="#" className="text-white text-opacity-75 hover:text-opacity-100 transition text-sm font-medium">{t.home}</a>
+                            <a href="#" className="text-white text-opacity-75 hover:text-opacity-100 transition text-sm font-medium">{t.deals}</a>
+                            <a href="#" className="text-white text-opacity-75 hover:text-opacity-100 transition text-sm font-medium">{t.affiliate}</a>
+                            <a href="#" className="text-white text-opacity-75 hover:text-opacity-100 transition text-sm font-medium">{t.profile}</a>
+                        </nav>
+                    </div>
+                </header>
+            );
+        }
+
+        // Search Bar Component
+        function SearchBar({ searchTerm, setSearchTerm, t }) {
+            return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1 relative">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl">🔍</span>
+                            <input
+                                type="text"
+                                placeholder={t.searchPlaceholder}
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full pl-14 pr-4 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition text-lg"
+                            />
+                        </div>
+                        <button className="gradient-bg text-white px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2">
+                            <span>🚀</span>
+                            {t.search}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Filter Sidebar Component
+        function FilterSidebar({ filters, setFilters, t, categories }) {
+            return (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-lg dark:text-white">📋 {t.filters}</h3>
+                        <button
+                            onClick={() => setFilters({
+                                category: '',
+                                minPrice: '',
+                                maxPrice: '',
+                                marketplaces: Object.keys(MARKETPLACES),
+                                freeShipping: false,
+                                inStockOnly: false,
+                                minRating: 0
+                            })}
+                            className="text-sm text-primary hover:underline"
+                        >
+                            {t.reset}
+                        </button>
+                    </div>
+                    
+                    {/* Category Filter */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📂 Category</label>
+                        <select
+                            value={filters.category}
+                            onChange={e => setFilters({...filters, category: e.target.value})}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                        >
+                            <option value="">{t.products}</option>
+                            {categories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    {/* Price Range */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">💰 {t.price}</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="number"
+                                placeholder="Min"
+                                value={filters.minPrice}
+                                onChange={e => setFilters({...filters, minPrice: e.target.value})}
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                            />
+                            <input
+                                type="number"
+                                placeholder="Max"
+                                value={filters.maxPrice}
+                                onChange={e => setFilters({...filters, maxPrice: e.target.value})}
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                            />
+                        </div>
+                    </div>
+                    
+                    {/* Marketplaces */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🏪 {t.marketplaces}</label>
+                        <div className="space-y-2">
+                            {Object.entries(MARKETPLACES).map(([key, mp]) => (
+                                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={filters.marketplaces.includes(key)}
+                                        onChange={e => {
+                                            if (e.target.checked) {
+                                                setFilters({...filters, marketplaces: [...filters.marketplaces, key]});
+                                            } else {
+                                                setFilters({...filters, marketplaces: filters.marketplaces.filter(m => m !== key)});
+                                            }
+                                        }}
+                                        className="rounded"
+                                    />
+                                    <span className={`marketplace-badge ${mp.class}`}>{mp.icon} {mp.name}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Shipping */}
+                    <div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={filters.freeShipping}
+                                onChange={e => setFilters({...filters, freeShipping: e.target.checked})}
+                                className="rounded"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">🚚 Free Shipping Only</span>
+                        </label>
+                    </div>
+                    
+                    {/* In Stock */}
+                    <div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={filters.inStockOnly}
+                                onChange={e => setFilters({...filters, inStockOnly: e.target.checked})}
+                                className="rounded"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">✅ In Stock Only</span>
+                        </label>
+                    </div>
+                    
+                    {/* Rating */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">⭐ {t.rating}</label>
+                        <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="0.5"
+                            value={filters.minRating}
+                            onChange={e => setFilters({...filters, minRating: parseFloat(e.target.value)})}
+                            className="w-full"
+                        />
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Min: {filters.minRating}⭐</div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Price History Chart Component
+        function PriceHistoryChart({ history }) {
+            const max = Math.max(...history);
+            const min = Math.min(...history);
+            const range = max - min || 1;
+            
+            return (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📈 Price History</h4>
+                    <div className="flex items-end gap-1 h-16">
+                        {history.map((price, i) => (
+                            <div key={i} className="flex-1 flex flex-col items-center">
+                                <div 
+                                    className="w-full bg-gradient-to-t from-primary to-secondary rounded-t opacity-75 hover:opacity-100 transition"
+                                    style={{ height: `${((price - min) / range) * 100}%`, minHeight: '4px' }}
+                                ></div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span>Min: ${min}</span>
+                        <span>Max: ${max}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // Product Card Component
+        function ProductCard({ product, onSelect, t, userTokens, setUserTokens }) {
+            const bestPrice = Math.min(...product.prices.filter(p => p.inStock).map(p => p.price + p.shipping));
+            const maxPrice = Math.max(...product.prices.map(p => p.price + p.shipping));
+            const savings = maxPrice - bestPrice;
+            const savingsPercent = ((savings / maxPrice) * 100).toFixed(0);
+            
+            return (
+                <div 
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden card-hover cursor-pointer slide-in"
+                    onClick={() => onSelect(product)}
+                >
+                    <div className="h-40 gradient-bg flex items-center justify-center relative">
+                        <span className="text-6xl">{product.image}</span>
+                        <span className={`marketplace-badge absolute top-2 right-2 ${MARKETPLACES[product.prices[0].marketplace].class}`}>
+                            {product.prices.length} stores
+                        </span>
+                    </div>
+                    <div className="p-5">
+                        <span className="text-xs font-medium text-primary bg-primary bg-opacity-10 px-2 py-1 rounded-full">
+                            {product.category}
+                        </span>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-2 mb-2 line-clamp-2">
+                            {product.name.en}
+                        </h3>
+                        
+                        {/* Specs Preview */}
+                        <div className="flex gap-2 mb-3 flex-wrap">
+                            {Object.entries(product.specs).slice(0, 2).map(([key, value]) => (
+                                <span key={key} className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                                    {key}: {value}
+                                </span>
+                            ))}
+                        </div>
+                        
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-2xl font-bold text-primary">${bestPrice.toFixed(2)}</span>
+                            {savings > 0 && (
+                                <span className="text-sm text-green-600 font-medium">
+                                    Save ${savings.toFixed(2)} ({savingsPercent}%)
+                                </span>
+                            )}
+                        </div>
+                        
+                        {/* Token Reward */}
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">🪙 {t.tokenReward}</span>
+                            <span className="text-sm font-bold text-accent">+{product.tokenReward} HAYQ</span>
+                        </div>
+                        
+                        <PriceHistoryChart history={product.priceHistory} />
+                        
+                        <button 
+                            className="w-full mt-4 gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setUserTokens(userTokens + product.tokenReward);
+                            }}
+                        >
+                            {t.viewDetails} →
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Product Detail Modal Component
+        function ProductDetail({ product, onClose, t, userTokens, setUserTokens }) {
+            const [selectedOffer, setSelectedOffer] = useState(null);
+            const bestPrice = Math.min(...product.prices.filter(p => p.inStock).map(p => p.price + p.shipping));
+            const bestOffer = product.prices.filter(p => p.inStock).sort((a, b) => (a.price + a.shipping) - (b.price + b.shipping))[0];
+            
+            const handleBuy = (offer) => {
+                setUserTokens(userTokens + product.tokenReward);
+                window.open(offer.url, '_blank');
+            };
+            
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+                    <div 
+                        className="bg-white dark:bg-gray-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto slide-in"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="sticky top-0 gradient-bg text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                            <h2 className="text-xl font-bold">{product.name.en}</h2>
+                            <button onClick={onClose} className="text-white hover:text-gray-200 text-3xl">×</button>
+                        </div>
+                        
+                        <div className="p-6">
+                            <div className="grid md:grid-cols-2 gap-8">
+                                {/* Left Column - Image & Info */}
+                                <div>
+                                    <div className="h-64 gradient-bg rounded-xl flex items-center justify-center mb-4">
+                                        <span className="text-8xl">{product.image}</span>
+                                    </div>
+                                    
+                                    {/* Match Score */}
+                                    <div className="bg-green-50 dark:bg-green-900 dark:bg-opacity-20 rounded-lg p-4 mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl">✅</span>
+                                            <div>
+                                                <div className="font-semibold text-green-700 dark:text-green-400">Product Match Score</div>
+                                                <div className="text-sm text-green-600 dark:text-green-500">{(product.matchScore * 100).toFixed(0)}% confidence</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Specifications */}
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                                        <h4 className="font-semibold mb-3 dark:text-white">⚙️ {t.specifications}</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {Object.entries(product.specs).map(([key, value]) => (
+                                                <div key={key} className="text-sm">
+                                                    <span className="text-gray-500 dark:text-gray-400">{key}:</span>
+                                                    <span className="ml-2 font-medium dark:text-white">{value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    <PriceHistoryChart history={product.priceHistory} />
+                                </div>
+                                
+                                {/* Right Column - Offers */}
+                                <div>
+                                    <h3 className="text-lg font-bold mb-4 dark:text-white">🏪 All Offers ({product.prices.length})</h3>
+                                    <div className="space-y-4">
+                                        {product.prices
+                                            .sort((a, b) => (a.price + a.shipping) - (b.price + b.shipping))
+                                            .map((offer, i) => {
+                                                const mp = MARKETPLACES[offer.marketplace];
+                                                const total = offer.price + offer.shipping;
+                                                const isBest = total === bestPrice && offer.inStock;
+                                                
+                                                return (
+                                                    <div 
+                                                        key={i}
+                                                        className={`border-2 rounded-xl p-4 transition cursor-pointer ${
+                                                            isBest 
+                                                                ? 'border-green-500 bg-green-50 dark:bg-green-900 dark:bg-opacity-20' 
+                                                                : 'border-gray-200 dark:border-gray-600 hover:border-primary dark:bg-gray-700'
+                                                        }`}
+                                                        onClick={() => setSelectedOffer(offer)}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={`marketplace-badge ${mp.class}`}>{mp.icon} {mp.name}</span>
+                                                                {isBest && (
+                                                                    <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">🏆 {t.bestDeal}</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-2xl font-bold text-gray-900 dark:text-white">${offer.price.toFixed(2)}</div>
+                                                                {offer.shipping > 0 && (
+                                                                    <div className="text-sm text-gray-500 dark:text-gray-400">+ ${offer.shipping} shipping</div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="flex items-center justify-between text-sm mb-3">
+                                                            <span className="text-gray-600 dark:text-gray-400">🚚 {offer.delivery}</span>
+                                                            <span className="text-gray-600 dark:text-gray-400">⭐ {offer.rating}</span>
+                                                        </div>
+                                                        
+                                                        <div className={`text-sm mb-3 ${offer.inStock ? 'text-green-600' : 'text-red-600'}`}>
+                                                            {offer.inStock ? '✓ In Stock' : '✗ Out of Stock'}
+                                                        </div>
+                                                        
+                                                        <button
+                                                            onClick={() => handleBuy(offer)}
+                                                            disabled={!offer.inStock}
+                                                            className={`w-full py-2 rounded-lg font-medium transition ${
+                                                                offer.inStock
+                                                                    ? 'gradient-bg text-white hover:opacity-90'
+                                                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                            }`}
+                                                        >
+                                                            {offer.inStock ? `${t.buyNow} (+${product.tokenReward} HAYQ)` : t.unavailable}
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                    
+                                    {/* Token Reward Summary */}
+                                    <div className="mt-6 bg-accent bg-opacity-10 rounded-xl p-4 token-glow">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-3xl">🪙</span>
+                                            <div>
+                                                <div className="font-bold text-accent">{t.tokenReward}</div>
+                                                <div className="text-sm text-gray-600 dark:text-gray-400">Earn +{product.tokenReward} HAYQ on purchase</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Stats Dashboard Component
+        function StatsDashboard({ products, t, userTokens }) {
+            const totalProducts = products.length;
+            const totalOffers = products.reduce((sum, p) => sum + p.prices.length, 0);
+            const avgSavings = products.reduce((sum, p) => {
+                if (p.prices.length < 2) return sum;
+                const prices = p.prices.map(pr => pr.price + pr.shipping);
+                return sum + (Math.max(...prices) - Math.min(...prices));
+            }, 0) / products.filter(p => p.prices.length >= 2).length || 0;
+            
+            return (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
+                        <div className="text-3xl mb-2">📦</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalProducts}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{t.productsTracked}</div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
+                        <div className="text-3xl mb-2">🏪</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalOffers}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{t.marketplaces}</div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
+                        <div className="text-3xl mb-2">💰</div>
+                        <div className="text-2xl font-bold text-green-600">${avgSavings.toFixed(2)}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{t.savings}</div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
+                        <div className="text-3xl mb-2">🪙</div>
+                        <div className="text-2xl font-bold text-accent">{userTokens}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">HAYQ Tokens</div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
+                        <div className="text-3xl mb-2">🤖</div>
+                        <div className="text-2xl font-bold text-primary">5</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">AI Matches</div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Telegram Bot Promo Component
+        function TelegramPromo({ t }) {
+            return (
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 mb-8 text-white">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <span className="text-5xl">✈️</span>
+                            <div>
+                                <h3 className="text-xl font-bold">{t.telegram}</h3>
+                                <p className="text-blue-100">Get instant price alerts and deals on Telegram!</p>
+                            </div>
+                        </div>
+                        <a
+                            href="https://t.me/pricetrader_bot"
+                            target="_blank"
+                            className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+                        >
+                            Open Bot →
+                        </a>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [darkMode, setDarkMode] = useState(false);
+            const [lang, setLang] = useState('hy');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedProduct, setSelectedProduct] = useState(null);
+            const [userTokens, setUserTokens] = useState(150);
+            const [filters, setFilters] = useState({
+                category: '',
+                minPrice: '',
+                maxPrice: '',
+                marketplaces: Object.keys(MARKETPLACES),
+                freeShipping: false,
+                inStockOnly: false,
+                minRating: 0
+            });
+            const [sortBy, setSortBy] = useState('price');
+            
+            const t = translations[lang];
+            
+            useEffect(() => {
+                if (darkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [darkMode]);
+            
+            const categories = useMemo(() => [...new Set(MOCK_PRODUCTS.map(p => p.category))], []);
+            
+            const filteredProducts = useMemo(() => {
+                return MOCK_PRODUCTS
+                    .filter(product => {
+                        const name = product.name[lang] || product.name.en;
+                        if (searchTerm && !name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+                        if (filters.category && product.category !== filters.category) return false;
+                        
+                        const minProductPrice = Math.min(...product.prices.map(p => p.price + p.shipping));
+                        if (filters.minPrice && minProductPrice < parseFloat(filters.minPrice)) return false;
+                        if (filters.maxPrice && minProductPrice > parseFloat(filters.maxPrice)) return false;
+                        if (filters.freeShipping && !product.prices.some(p => p.shipping === 0 && p.inStock)) return false;
+                        if (filters.inStockOnly && !product.prices.some(p => p.inStock)) return false;
+                        if (filters.minRating && Math.max(...product.prices.map(p => p.rating)) < filters.minRating) return false;
+                        
+                        return true;
+                    })
+                    .sort((a, b) => {
+                        const aPrice = Math.min(...a.prices.map(p => p.price + p.shipping));
+                        const bPrice = Math.min(...b.prices.map(p => p.price + p.shipping));
+                        if (sortBy === 'price') return aPrice - bPrice;
+                        if (sortBy === 'name') return (a.name.en || '').localeCompare(b.name.en || '');
+                        if (sortBy === 'rating') return Math.max(...b.prices.map(p => p.rating)) - Math.max(...a.prices.map(p => p.rating));
+                        return 0;
+                    });
+            }, [MOCK_PRODUCTS, searchTerm, filters, sortBy, lang]);
+            
+            return (
+                <I18nContext.Provider value={{ lang, t }}>
+                    <div className="min-h-screen bg-gray-50 dark:bg-dark transition-colors duration-300">
+                        <Header 
+                            darkMode={darkMode} 
+                            setDarkMode={setDarkMode} 
+                            lang={lang} 
+                            setLang={setLang}
+                            t={t}
+                            userTokens={userTokens}
+                        />
+                        
+                        <main className="max-w-7xl mx-auto px-4 py-8">
+                            <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} t={t} />
+                            
+                            <StatsDashboard products={MOCK_PRODUCTS} t={t} userTokens={userTokens} />
+                            
+                            <TelegramPromo t={t} />
+                            
+                            <div className="grid lg:grid-cols-4 gap-8">
+                                <div className="lg:col-span-1">
+                                    <FilterSidebar filters={filters} setFilters={setFilters} t={t} categories={categories} />
+                                </div>
+                                
+                                <div className="lg:col-span-3">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h2 className="text-xl font-bold dark:text-white">
+                                            {filteredProducts.length} {t.products}
+                                        </h2>
+                                        <select
+                                            value={sortBy}
+                                            onChange={e => setSortBy(e.target.value)}
+                                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                                        >
+                                            <option value="price">Sort by Price</option>
+                                            <option value="name">Sort by Name</option>
+                                            <option value="rating">Sort by Rating</option>
+                                        </select>
+                                    </div>
+                                    
+                                    {filteredProducts.length === 0 ? (
+                                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
+                                            <div className="text-6xl mb-4">📭</div>
+                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.noProducts}</h3>
+                                            <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                            {filteredProducts.map(product => (
+                                                <ProductCard 
+                                                    key={product.id} 
+                                                    product={product} 
+                                                    onSelect={setSelectedProduct}
+                                                    t={t}
+                                                    userTokens={userTokens}
+                                                    setUserTokens={setUserTokens}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </main>
+                        
+                        {/* Footer */}
+                        <footer className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 mt-16">
+                            <div className="max-w-7xl mx-auto px-4 py-12">
+                                <div className="grid md:grid-cols-4 gap-8">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <span className="text-3xl">🛒</span>
+                                            <span className="text-xl font-bold gradient-text">PriceTrader</span>
+                                        </div>
+                                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                                            Compare prices across multiple marketplaces and save money on every purchase.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold mb-4 dark:text-white">Marketplaces</h4>
+                                        <ul className="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                            {Object.values(MARKETPLACES).map(mp => (
+                                                <li key={mp.name}>{mp.name}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold mb-4 dark:text-white">Features</h4>
+                                        <ul className="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                            <li>🤖 AI Product Matching</li>
+                                            <li>📊 Price History</li>
+                                            <li>🪙 HAYQ Rewards</li>
+                                            <li>✈️ Telegram Bot</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold mb-4 dark:text-white">Legal</h4>
+                                        <ul className="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                            <li><a href="#" className="hover:text-primary transition">Privacy Policy</a></li>
+                                            <li><a href="#" className="hover:text-primary transition">Terms of Service</a></li>
+                                            <li><a href="#" className="hover:text-primary transition">Affiliate Disclosure</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div className="border-t dark:border-gray-700 mt-8 pt-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                                    © 2024 PriceTrader. All rights reserved. 🇦🇲 Made with ❤️ in Armenia
+                                </div>
+                            </div>
+                        </footer>
+                        
+                        {/* Product Detail Modal */}
+                        {selectedProduct && (
+                            <ProductDetail 
+                                product={selectedProduct} 
+                                onClose={() => setSelectedProduct(null)}
+                                t={t}
+                                userTokens={userTokens}
+                                setUserTokens={setUserTokens}
+                            />
+                        )}
+                    </div>
+                </I18nContext.Provider>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
