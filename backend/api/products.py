@@ -1,15 +1,6 @@
 from fastapi import FastAPI
-from typing import List
 
 app = FastAPI()
-
-class Product:
-    def __init__(self, id: int, name: str, price: float, store: str, url: str):
-        self.id = id
-        self.name = name
-        self.price = price
-        self.store = store
-        self.url = url
 
 @app.get("/products")
 async def get_products():
@@ -24,5 +15,4 @@ async def get_products():
 async def root():
     return {"message": "PriceTrader API is running"}
 
-# Vercel handler
 handler = app
