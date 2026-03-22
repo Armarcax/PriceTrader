@@ -7,14 +7,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Սա կաշխատի և՛ տեղական, և՛ Vercel-ում, քանի որ օգտագործում ենք հարաբերական ճանապարհ
     axios.get('/api/products')
       .then(response => {
         setProducts(response.data);
         setLoading(false);
       })
       .catch(error => {
-        console.error("Error fetching data:", error);
+        console.error("API Error:", error);
         setLoading(false);
       });
   }, []);
@@ -25,23 +24,21 @@ export default function App() {
         <h1>PriceTrader</h1>
         <p>Գների Համեմատության Հարթակ</p>
       </header>
-      
       <main>
         {loading ? (
           <p>Բեռնվում է...</p>
         ) : (
           <div className="product-grid">
             {products.length > 0 ? (
-              products.map(product => (
-                <div key={product.id} className="card">
-                  <h3>{product.name}</h3>
-                  <div className="price">{product.price} $</div>
-                  <div className="store">{product.store}</div>
-                  <a href={product.url} className="btn">Գնել</a>
+              products.map(p => (
+                <div key={p.id} className="card">
+                  <h3>{p.name}</h3>
+                  <div className="price">{p.price} $</div>
+                  <div className="store">{p.store}</div>
                 </div>
               ))
             ) : (
-              <p>Տվյալներ չեն գտնվել:</p>
+              <p>Տվյալներ չգտնվեցին:</p>
             )}
           </div>
         )}

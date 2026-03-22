@@ -1,17 +1,16 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 from typing import List
 
 app = FastAPI()
 
-class Product(BaseModel):
-    id: int
-    name: str
-    price: float
-    store: str
-    url: str
+class Product:
+    def __init__(self, id: int, name: str, price: float, store: str, url: str):
+        self.id = id
+        self.name = name
+        self.price = price
+        self.store = store
+        self.url = url
 
-# Այս ֆունկցիան կպատասխանի /api/products հարցմանը
 @app.get("/products")
 async def get_products():
     return [
@@ -23,7 +22,7 @@ async def get_products():
 
 @app.get("/")
 async def root():
-    return {"message": "PriceTrader API is running on Vercel"}
+    return {"message": "PriceTrader API is running"}
 
-# Vercel-ի համար անհրաժեշտ handler
+# Vercel handler
 handler = app
