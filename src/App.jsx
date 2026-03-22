@@ -35,6 +35,7 @@ export default function App() {
                   <h3>{p.name}</h3>
                   <div className="price">{p.price} $</div>
                   <div className="store">{p.store}</div>
+                  <a href={p.url} className="btn">Գնել</a>
                 </div>
               ))
             ) : (
