@@ -1,19 +1,8 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
 app = FastAPI()
-
-# Vercel-ում CORS-ը հաճախ անհրաժեշտ չէ, եթե frontend-ը նույն դոմեյնում է, 
-# բայց թողնենք անվտանգության համար
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 class Product(BaseModel):
     id: int
@@ -22,7 +11,8 @@ class Product(BaseModel):
     store: str
     url: str
 
-@app.get("/api/products")
+# Այս ֆունկցիան կպատասխանի /api/products հարցմանը
+@app.get("/products")
 async def get_products():
     return [
         {"id": 1, "name": "iPhone 15", "price": 999.0, "store": "Store A", "url": "#"},
@@ -31,9 +21,9 @@ async def get_products():
         {"id": 4, "name": "Samsung S24", "price": 910.0, "store": "Store C", "url": "#"},
     ]
 
-@app.get("/api")
+@app.get("/")
 async def root():
     return {"message": "PriceTrader API is running on Vercel"}
 
-# Սա անհրաժեշտ է Vercel-ի Serverless-ի համար
+# Vercel-ի համար անհրաժեշտ handler
 handler = app
